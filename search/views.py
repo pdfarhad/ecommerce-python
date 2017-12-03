@@ -10,7 +10,13 @@ class SearchProductListView(ListView):
         request = self.request
         query = request.GET.get('q')
         if query is not None:
-            return Product.objects.filter(title__icontantains=query)
+            return Product.objects.filter(title__icontains=query)
         return Product.objects.none()
 
+    def get_context_data(self,*args, **kwargs):
+        context = super(SearchProductListView, self).get_context_data(*args,**kwargs)
+        query = self.request.GET.get('q')
+        context['query'] = query
+        # SearchQuery.objects.create(query)
+        return context
 # Create your views here.
