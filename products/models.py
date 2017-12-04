@@ -2,6 +2,7 @@ import os
 import random
 
 from django.db import models
+from django.db.models import Q
 from django.db.models.signals import pre_save
 from django.urls import reverse
 
@@ -25,12 +26,34 @@ def upload_image_path(instance, filename):
     )
 
 
+class ProductQuerySet(models.query.QuerySet):
+    def active(self):
+        return self.filter(active=True)
+
+    def featured(self):
+        return self.filter(featured=True, active=True)
+
+    def search(self, query):
+        lookups = Q(title__icontains=query) | Q(description__icontains=query)
+        return self.filter(lookups).distinct()
+
+
 class ProductManager(models.Manager):
+    def get_queryset(self):
+        return ProductQuerySet(self.model, using=self._db)
+
+    def all(self):
+        return self.get_queryset()
+
     def get_by_id(self, id):
         qs = self.get_queryset().filter(id=id)
         if qs.count() == 1:
             return qs.first()
         return None
+
+    def search(self, query):
+        # lookups = Q(title__icontains=query) | Q(description__icontains=query)
+        return self.get_queryset().search(query)
 
 
 # Create your models here.
